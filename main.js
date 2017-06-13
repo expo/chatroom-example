@@ -40,12 +40,21 @@ const styles = StyleSheet.create({
 });
 
 class App extends React.Component {
-    state = {
+  constructor() {
+    super();
+    var ds = new ListView.DataSource({
+      rowHasChanged: (r1, r2) => r1 !== r2
+    });
+    var initialMessages = ['row 1 cool', 'row 2 wow'];
+    this.state = {
       isConnected: false,
       data: null,
       message: 'default',
-      dataSource: 'not working',
+      lastMessage: 'not working',
+      messageList: initialMessages,
+      dataSource: ds.cloneWithRows(initialMessages),
     }
+  }
 
   componentDidMount() {
     const socket = io(url, {
@@ -61,7 +70,16 @@ class App extends React.Component {
     });
 
     socket.on('chat message', msg => {
-      this.setState({ dataSource: msg });
+      this.setState({ lastMessage: msg });
+      var newMessages = [];
+      newMessages = this.state.messageList.slice();
+      // change array
+      newMessages.push(msg);
+
+      this.setState({
+        messageList: newMessages,
+        dataSource: this.state.dataSource.cloneWithRows(newMessages),
+      });
     });
   }
 
@@ -82,11 +100,15 @@ class App extends React.Component {
   render() {
     return (
       <View style={styles.container}>
+        <ListView
+          dataSource = {this.state.dataSource}
+          renderRow = {(rowData) => <Text>{rowData}</Text>}
+        />
         <TextInput
           style={styles.input}
           onChangeText={this.onChange.bind(this)}
         />
-        <Text>last message: {this.state.dataSource}</Text>
+        <Text>last message: {this.state.lastMessage}</Text>
         <Text>connected: {this.state.isConnected ? 'true' : 'false'}</Text>
         {this.state.data &&
           <Text>
