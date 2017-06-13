@@ -45,7 +45,7 @@ class App extends React.Component {
     var ds = new ListView.DataSource({
       rowHasChanged: (r1, r2) => r1 !== r2
     });
-    var initialMessages = ['row 1 cool', 'row 2 wow'];
+    var initialMessages = ['Hello! Welcome to the chatroom.', 'Messages sent will appear here...'];
     this.state = {
       isConnected: false,
       data: null,
