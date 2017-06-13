@@ -44,7 +44,7 @@ class App extends React.Component {
       isConnected: false,
       data: null,
       message: 'default',
-      //dataSource: false,
+      dataSource: 'not working',
     }
 
   componentDidMount() {
@@ -60,9 +60,9 @@ class App extends React.Component {
       this.setState(data);
     });
 
-    //socket.on('chat message', dataSource => {
-    //  this.setState(dataSource);
-    //});
+    socket.on('chat message', msg => {
+      this.setState({ dataSource: msg });
+    });
   }
 
   onChange(text) {
@@ -86,6 +86,7 @@ class App extends React.Component {
           style={styles.input}
           onChangeText={this.onChange.bind(this)}
         />
+        <Text>last message: {this.state.dataSource}</Text>
         <Text>connected: {this.state.isConnected ? 'true' : 'false'}</Text>
         {this.state.data &&
           <Text>
