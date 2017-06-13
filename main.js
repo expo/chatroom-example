@@ -2,7 +2,7 @@ import Expo from 'expo';
 import React from 'react';
 import { ListView, TextInput, TouchableHighlight, StyleSheet, Text, View } from 'react-native';
 const io = require('socket.io-client');
-const url = 'https://f7c9e9a5.ngrok.io';
+const url = 'https://472455dd.ngrok.io';
 
 const styles = StyleSheet.create({
    container: {
@@ -23,9 +23,12 @@ const styles = StyleSheet.create({
       borderRadius: 3,
    },
    buttonText: {
-      fontSize: 18,
+      fontSize: 14,
       fontWeight: '600',
       color: '#FAFAFA',
+   },
+   chatText: {
+      fontSize: 16,
    },
    button: {
       height: 45,
@@ -45,7 +48,7 @@ class App extends React.Component {
     var ds = new ListView.DataSource({
       rowHasChanged: (r1, r2) => r1 !== r2
     });
-    var initialMessages = ['Hello! Welcome to the chatroom.', 'Messages sent will appear here...'];
+    var initialMessages = ['Hello! Welcome to the chatroom.', 'Send your first message to view the last 20 messages.'];
     this.state = {
       isConnected: false,
       data: null,
@@ -71,7 +74,8 @@ class App extends React.Component {
 
     socket.on('chat message', msg => {
       this.setState({ lastMessage: msg });
-      var newMessages = [];
+
+      /*var newMessages = [];
       newMessages = this.state.messageList.slice();
       // change array
       newMessages.push(msg);
@@ -79,8 +83,20 @@ class App extends React.Component {
       this.setState({
         messageList: newMessages,
         dataSource: this.state.dataSource.cloneWithRows(newMessages),
-      });
+      });*/
+
+      //socket.emit('list sent', this.state.messageList);
+
     });
+
+    socket.on('message list', list => {
+      this.setState({
+        messageList: list,
+        dataSource: this.state.dataSource.cloneWithRows(list),
+      })
+    });
+
+    socket.on()
   }
 
   onChange(text) {
@@ -102,14 +118,12 @@ class App extends React.Component {
       <View style={styles.container}>
         <ListView
           dataSource = {this.state.dataSource}
-          renderRow = {(rowData) => <Text>{rowData}</Text>}
+          renderRow = {(rowData) => <Text style={styles.chatText}>{rowData}</Text>}
         />
         <TextInput
           style={styles.input}
           onChangeText={this.onChange.bind(this)}
         />
-        <Text>last message: {this.state.lastMessage}</Text>
-        <Text>connected: {this.state.isConnected ? 'true' : 'false'}</Text>
         {this.state.data &&
           <Text>
             ping response: {this.state.data}
@@ -122,6 +136,7 @@ class App extends React.Component {
               Send
             </Text>
           </TouchableHighlight>
+          <Text>connected: {this.state.isConnected ? 'true' : 'false'}</Text>
       </View>
     );
   }
