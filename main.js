@@ -229,6 +229,7 @@ class App extends React.Component {
             renderRow = {(rowData) => <Text style={styles.chatText}>{rowData}</Text>}
           />
           <TextInput
+            ref={'chatInput'}
             style={styles.input}
             onChangeText={this.onChange.bind(this)}
           />
