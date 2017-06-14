@@ -11,18 +11,19 @@ io.on('connection', function(socket){
   socket.on('chat message', function(msg){
     console.log('message: ' + msg);
     io.emit('chat message', msg);
-    msgList.push(msg);
+    if (msg.coords != null) {
+       msgList.push('> Someone just shared their location! Latitude: '
+       + msg.coords.latitude + ', Longitude: ' + msg.coords.longitude);
+       io.emit('location', msg);
+    } else {
+       msgList.push(msg);
+    }
     if (msgList.length > 20) {
       msgList.splice(0, 1);
     }
-    //io.emit('message list', msgList);
+    io.emit('message list', msgList);
   });
-  /*socket.on('list sent', function(list){
-    console.log('i got something!');
-    msgList = list;
-
-  });*/
-  io.emit('message list', msgList);
+  //io.emit('message list', msgList);
   console.log('a user connected');
 });
 

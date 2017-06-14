@@ -1,8 +1,9 @@
-import Expo from 'expo';
-import React from 'react';
-import { ListView, TextInput, TouchableHighlight, StyleSheet, Text, View } from 'react-native';
+import Expo, { Constants, Location, Permissions, WebBrowser } from 'expo';
+import React, { Component } from 'react';
+import { Platform, ListView, TextInput, TouchableHighlight, StyleSheet, Text, View } from 'react-native';
+
 const io = require('socket.io-client');
-const url = 'https://472455dd.ngrok.io';
+const url = 'https://609cceab.ngrok.io';
 
 const styles = StyleSheet.create({
    container: {
@@ -56,6 +57,8 @@ class App extends React.Component {
       lastMessage: 'not working',
       messageList: initialMessages,
       dataSource: ds.cloneWithRows(initialMessages),
+      location: null,
+      lastLocation: null,
     }
   }
 
@@ -74,19 +77,10 @@ class App extends React.Component {
 
     socket.on('chat message', msg => {
       this.setState({ lastMessage: msg });
+    });
 
-      /*var newMessages = [];
-      newMessages = this.state.messageList.slice();
-      // change array
-      newMessages.push(msg);
-
-      this.setState({
-        messageList: newMessages,
-        dataSource: this.state.dataSource.cloneWithRows(newMessages),
-      });*/
-
-      //socket.emit('list sent', this.state.messageList);
-
+    socket.on('location', location => {
+      this.setState({ lastLocation: location });
     });
 
     socket.on('message list', list => {
@@ -95,8 +89,6 @@ class App extends React.Component {
         dataSource: this.state.dataSource.cloneWithRows(list),
       })
     });
-
-    socket.on()
   }
 
   onChange(text) {
@@ -106,6 +98,8 @@ class App extends React.Component {
   }
 
   onAddPressed() {
+    this.refs['chatInput'].clear();
+
     const socket = io(url, {
       transports: ['websocket'],
     });
@@ -113,32 +107,114 @@ class App extends React.Component {
     socket.emit('chat message', this.state.message);
   }
 
+  onSharePressed() {
+    this._getLocationAsync();
+  }
+
+  _getLocationAsync = async () => {
+    let { status } = await Permissions.askAsync(Permissions.LOCATION);
+    if (status !== 'granted') {
+      this.setState({
+        errorMessage: 'Permission to access location was denied',
+      });
+    }
+
+    let location = await Location.getCurrentPositionAsync({});
+    this.setState({ location });
+
+    const socket = io(url, {
+      transports: ['websocket'],
+    });
+
+    socket.emit('chat message', this.state.location);
+  };
+
+  _handlePressButtonAsync = async () => {
+    var siteAddress = 'https://www.google.com/maps/search/'
+    + this.state.lastLocation.coords.latitude + ',+' + this.state.lastLocation.coords.longitude;
+    let result = await WebBrowser.openBrowserAsync(siteAddress);
+    this.setState({ lastLocation: null });
+  };
+
   render() {
-    return (
-      <View style={styles.container}>
-        <ListView
-          dataSource = {this.state.dataSource}
-          renderRow = {(rowData) => <Text style={styles.chatText}>{rowData}</Text>}
-        />
-        <TextInput
-          style={styles.input}
-          onChangeText={this.onChange.bind(this)}
-        />
-        {this.state.data &&
-          <Text>
-            ping response: {this.state.data}
-          </Text>}
-          <TouchableHighlight
-            onPress={this.onAddPressed.bind(this)}
-            style={styles.button}
-          >
-            <Text style={styles.buttonText}>
-              Send
-            </Text>
-          </TouchableHighlight>
-          <Text>connected: {this.state.isConnected ? 'true' : 'false'}</Text>
-      </View>
-    );
+    if (this.state.lastLocation == null) {
+      return (
+        <View style={styles.container}>
+          <ListView
+            dataSource = {this.state.dataSource}
+            renderRow = {(rowData) => <Text style={styles.chatText}>{rowData}</Text>}
+          />
+          <TextInput
+            ref={'chatInput'}
+            style={styles.input}
+            onChangeText={this.onChange.bind(this)}
+          />
+          {this.state.data &&
+            <Text>
+              ping response: {this.state.data}
+            </Text>}
+            <TouchableHighlight
+              onPress={this.onAddPressed.bind(this)}
+              style={styles.button}
+            >
+              <Text style={styles.buttonText}>
+                Send Message
+              </Text>
+            </TouchableHighlight>
+            <TouchableHighlight
+              onPress={this.onSharePressed.bind(this)}
+              style={styles.button}
+            >
+              <Text style={styles.buttonText}>
+                Share Location
+              </Text>
+            </TouchableHighlight>
+            <Text>connected: {this.state.isConnected ? 'true' : 'false'}</Text>
+        </View>
+      );
+    } else {
+      return (
+        <View style={styles.container}>
+          <ListView
+            dataSource = {this.state.dataSource}
+            renderRow = {(rowData) => <Text style={styles.chatText}>{rowData}</Text>}
+          />
+          <TextInput
+            style={styles.input}
+            onChangeText={this.onChange.bind(this)}
+          />
+          {this.state.data &&
+            <Text>
+              ping response: {this.state.data}
+            </Text>}
+            <TouchableHighlight
+              onPress={this.onAddPressed.bind(this)}
+              style={styles.button}
+            >
+              <Text style={styles.buttonText}>
+                Send Message
+              </Text>
+            </TouchableHighlight>
+            <TouchableHighlight
+              onPress={this.onSharePressed.bind(this)}
+              style={styles.button}
+            >
+              <Text style={styles.buttonText}>
+                Share Location
+              </Text>
+            </TouchableHighlight>
+            <TouchableHighlight
+              onPress={this._handlePressButtonAsync}
+              style={styles.button}
+            >
+              <Text style={styles.buttonText}>
+                View Last Shared Location
+              </Text>
+            </TouchableHighlight>
+            <Text>connected: {this.state.isConnected ? 'true' : 'false'}</Text>
+        </View>
+      );
+    }
   }
 }
 
