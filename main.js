@@ -1,9 +1,10 @@
 import Expo, { Components, Constants, Location, Permissions, WebBrowser } from 'expo';
 import React, { Component } from 'react';
-import { Platform, ListView, TextInput, TouchableHighlight, StyleSheet, Text, View } from 'react-native';
+import { Platform, ListView, TextInput, TouchableHighlight, TouchableOpacity, StyleSheet, Text, View, Dimensions } from 'react-native';
 
 const io = require('socket.io-client');
 const url = 'https://609cceab.ngrok.io';
+var {height, width} = Dimensions.get('window');
 
 const styles = StyleSheet.create({
    container: {
@@ -23,14 +24,6 @@ const styles = StyleSheet.create({
       padding: 15,
       borderRadius: 3,
    },
-   buttonText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: '#FAFAFA',
-   },
-   chatText: {
-      fontSize: 16,
-   },
    button: {
       height: 45,
       alignSelf: 'stretch',
@@ -40,6 +33,18 @@ const styles = StyleSheet.create({
       marginRight: 10,
       alignItems: 'center',
       justifyContent: 'center',
+   },
+   buttonText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#FAFAFA',
+   },
+   chatText: {
+      fontSize: 16,
+   },
+   map: {
+     width: width,
+     height: height - 67,
    },
 });
 
@@ -62,6 +67,16 @@ class App extends React.Component {
       inMapView: false,
       latitude: 35.4478014,
       longitude: -120.1680304,
+      buttonStyle: {
+         height: 45,
+         alignSelf: 'stretch',
+         backgroundColor: '#E1E1E1',
+         marginTop: 10,
+         marginLeft: 10,
+         marginRight: 10,
+         alignItems: 'center',
+         justifyContent: 'center',
+      },
     }
   }
 
@@ -71,7 +86,19 @@ class App extends React.Component {
     });
 
     socket.on('connect', () => {
-      this.setState({ isConnected: true });
+      this.setState({
+        isConnected: true,
+        buttonStyle: {
+          height: 45,
+          alignSelf: 'stretch',
+          backgroundColor: '#05A5D1',
+          marginTop: 10,
+          marginLeft: 10,
+          marginRight: 10,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }
+      });
     });
 
     socket.on('ping', data => {
@@ -147,10 +174,6 @@ class App extends React.Component {
 
   _handlePressButtonAsync = async () => {
     this.setState({ inMapView: true });
-    //var siteAddress = 'https://www.google.com/maps/search/'
-    //+ this.state.lastLocation.coords.latitude + ',+' + this.state.lastLocation.coords.longitude;
-    //let result = await WebBrowser.openBrowserAsync(siteAddress);
-    //this.setState({ lastLocation: null });
   };
 
   render() {
@@ -166,13 +189,9 @@ class App extends React.Component {
             style={styles.input}
             onChangeText={this.onChange.bind(this)}
           />
-          {this.state.data &&
-            <Text>
-              ping response: {this.state.data}
-            </Text>}
             <TouchableHighlight
               onPress={this.onAddPressed.bind(this)}
-              style={styles.button}
+              style={this.state.buttonStyle}
             >
               <Text style={styles.buttonText}>
                 Send Message
@@ -180,13 +199,12 @@ class App extends React.Component {
             </TouchableHighlight>
             <TouchableHighlight
               onPress={this.onSharePressed.bind(this)}
-              style={styles.button}
+              style={this.state.buttonStyle}
             >
               <Text style={styles.buttonText}>
                 Share Location
               </Text>
             </TouchableHighlight>
-            <Text>connected: {this.state.isConnected ? 'true' : 'false'}</Text>
         </View>
       );
     } else if (this.state.inMapView == false) {
@@ -200,13 +218,9 @@ class App extends React.Component {
             style={styles.input}
             onChangeText={this.onChange.bind(this)}
           />
-          {this.state.data &&
-            <Text>
-              ping response: {this.state.data}
-            </Text>}
             <TouchableHighlight
               onPress={this.onAddPressed.bind(this)}
-              style={styles.button}
+              style={this.state.buttonStyle}
             >
               <Text style={styles.buttonText}>
                 Send Message
@@ -214,7 +228,7 @@ class App extends React.Component {
             </TouchableHighlight>
             <TouchableHighlight
               onPress={this.onSharePressed.bind(this)}
-              style={styles.button}
+              style={this.state.buttonStyle}
             >
               <Text style={styles.buttonText}>
                 Share Location
@@ -228,27 +242,31 @@ class App extends React.Component {
                 View Last Shared Location
               </Text>
             </TouchableHighlight>
-            <Text>connected: {this.state.isConnected ? 'true' : 'false'}</Text>
         </View>
       );
     } else {
       return (
-        <Components.MapView
-          style={{ flex: 1 }}
-          region={{
-            latitude: this.state.latitude,
-            longitude: this.state.longitude,
-            latitudeDelta: 0.0922,
-            longitudeDelta: 0.0421,
-          }}
-        >
-        <Components.MapView.Marker
-          coordinate={{
-            latitude: this.state.latitude,
-            longitude: this.state.longitude,
-          }}
-        />
-        </Components.MapView>
+        <View>
+          <Components.MapView
+            style={styles.map}
+            region={{
+              latitude: this.state.latitude,
+              longitude: this.state.longitude,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
+            }}
+          >
+          <Components.MapView.Marker
+            coordinate={{
+              latitude: this.state.latitude,
+              longitude: this.state.longitude,
+            }}
+          />
+          </Components.MapView>
+          <TouchableOpacity style={styles.button} onPress={this.onMapPressed.bind(this)}>
+            <Text style={styles.buttonText}> Back to Chatroom </Text>
+          </TouchableOpacity>
+        </View>
       );
     }
   }
