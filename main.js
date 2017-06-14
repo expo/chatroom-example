@@ -1,20 +1,13 @@
 import Expo, { Components, Constants, Location, Permissions, WebBrowser } from 'expo';
 import React, { Component } from 'react';
 import { Platform, ListView, TextInput, TouchableHighlight, TouchableOpacity, StyleSheet, Text, View, Dimensions } from 'react-native';
+import KeyboardEventListener from './util/KeyboardEventListener';
 
 const io = require('socket.io-client');
 const url = 'https://609cceab.ngrok.io';
 var {height, width} = Dimensions.get('window');
 
 const styles = StyleSheet.create({
-   container: {
-      flex: 1,
-      justifyContent: 'flex-end',
-      paddingTop: 20,
-      marginLeft: 10,
-      backgroundColor: '#F7F7F7',
-      paddingBottom: 50,
-   },
    input: {
       borderWidth: 1,
       borderColor: '#D7D7D7',
@@ -77,10 +70,31 @@ class App extends React.Component {
          alignItems: 'center',
          justifyContent: 'center',
       },
+      containerStyle: {
+         flex: 1,
+         justifyContent: 'flex-end',
+         paddingTop: 20,
+         marginLeft: 10,
+         backgroundColor: '#F7F7F7',
+         paddingBottom: 10,
+      },
     }
   }
 
   componentDidMount() {
+    KeyboardEventListener.subscribe(({keyboardHeight}) => {
+      this.setState({
+        containerStyle: {
+           flex: 1,
+           justifyContent: 'flex-end',
+           paddingTop: 20,
+           marginLeft: 10,
+           backgroundColor: '#F7F7F7',
+           paddingBottom: 10 + keyboardHeight,
+        },
+      });
+    })
+
     const socket = io(url, {
       transports: ['websocket'],
     });
@@ -179,7 +193,7 @@ class App extends React.Component {
   render() {
     if (this.state.lastLocation == null) {
       return (
-        <View style={styles.container}>
+        <View style={this.state.containerStyle}>
           <ListView
             dataSource = {this.state.dataSource}
             renderRow = {(rowData) => <Text style={styles.chatText}>{rowData}</Text>}
@@ -209,7 +223,7 @@ class App extends React.Component {
       );
     } else if (this.state.inMapView == false) {
       return (
-        <View style={styles.container}>
+        <View style={this.state.containerStyle}>
           <ListView
             dataSource = {this.state.dataSource}
             renderRow = {(rowData) => <Text style={styles.chatText}>{rowData}</Text>}
