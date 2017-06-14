@@ -1,4 +1,4 @@
-import Expo, { Constants, Location, Permissions, WebBrowser } from 'expo';
+import Expo, { Components, Constants, Location, Permissions, WebBrowser } from 'expo';
 import React, { Component } from 'react';
 import { Platform, ListView, TextInput, TouchableHighlight, StyleSheet, Text, View } from 'react-native';
 
@@ -53,12 +53,15 @@ class App extends React.Component {
     this.state = {
       isConnected: false,
       data: null,
-      message: 'default',
-      lastMessage: 'not working',
+      message: ' ',
+      lastMessage: 'no previous messages',
       messageList: initialMessages,
       dataSource: ds.cloneWithRows(initialMessages),
       location: null,
       lastLocation: null,
+      inMapView: false,
+      latitude: 35.4478014,
+      longitude: -120.1680304,
     }
   }
 
@@ -80,7 +83,13 @@ class App extends React.Component {
     });
 
     socket.on('location', location => {
-      this.setState({ lastLocation: location });
+      this.setState({
+        lastLocation: location,
+      });
+      this.setState({
+        longitude: this.state.lastLocation.coords.longitude,
+        latitude: this.state.lastLocation.coords.latitude,
+      });
     });
 
     socket.on('message list', list => {
@@ -111,6 +120,13 @@ class App extends React.Component {
     this._getLocationAsync();
   }
 
+  onMapPressed() {
+    this.setState({
+      lastLocation: null,
+      inMapView: false,
+    });
+  }
+
   _getLocationAsync = async () => {
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
     if (status !== 'granted') {
@@ -130,10 +146,11 @@ class App extends React.Component {
   };
 
   _handlePressButtonAsync = async () => {
-    var siteAddress = 'https://www.google.com/maps/search/'
-    + this.state.lastLocation.coords.latitude + ',+' + this.state.lastLocation.coords.longitude;
-    let result = await WebBrowser.openBrowserAsync(siteAddress);
-    this.setState({ lastLocation: null });
+    this.setState({ inMapView: true });
+    //var siteAddress = 'https://www.google.com/maps/search/'
+    //+ this.state.lastLocation.coords.latitude + ',+' + this.state.lastLocation.coords.longitude;
+    //let result = await WebBrowser.openBrowserAsync(siteAddress);
+    //this.setState({ lastLocation: null });
   };
 
   render() {
@@ -172,7 +189,7 @@ class App extends React.Component {
             <Text>connected: {this.state.isConnected ? 'true' : 'false'}</Text>
         </View>
       );
-    } else {
+    } else if (this.state.inMapView == false) {
       return (
         <View style={styles.container}>
           <ListView
@@ -213,6 +230,25 @@ class App extends React.Component {
             </TouchableHighlight>
             <Text>connected: {this.state.isConnected ? 'true' : 'false'}</Text>
         </View>
+      );
+    } else {
+      return (
+        <Components.MapView
+          style={{ flex: 1 }}
+          region={{
+            latitude: this.state.latitude,
+            longitude: this.state.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+        >
+        <Components.MapView.Marker
+          coordinate={{
+            latitude: this.state.latitude,
+            longitude: this.state.longitude,
+          }}
+        />
+        </Components.MapView>
       );
     }
   }
